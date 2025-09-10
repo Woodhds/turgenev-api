@@ -1,4 +1,4 @@
-import { query, form } from "$app/server";
+import { form } from "$app/server";
 
 export const foo = form(async (data) => {
   const text = data.get("text") as string;
@@ -10,14 +10,30 @@ export const foo = form(async (data) => {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: new URLSearchParams({ text, key, api }),
+    body: new URLSearchParams({ text, key, api, more: "1" }),
   });
+  const responseData = await response.json();
 
-  const responseData = (await response.json()) as ResponseData;
-
-  return responseData;
+  return responseData as AnalysisResult;
 });
 
-interface ResponseData {
+export interface Param {
+  value: string | number;
+  name: string;
+  score: number;
+}
+
+export interface Detail {
+  params: Param[];
   link: string;
+  block: string;
+  sum: number;
+}
+
+export interface AnalysisResult {
+  link: string;
+  level: string | undefined;
+  details: Detail[];
+  risk: number | undefined;
+  params: Param[];
 }

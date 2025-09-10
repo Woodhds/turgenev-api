@@ -1,30 +1,51 @@
 <script lang="ts">
-    import { foo } from "./data.remote";
+    import {
+        foo,
+        type AnalysisResult,
+        type Detail,
+        type DetailResult,
+    } from "./data.remote";
     import { onMount } from "svelte";
-    import { flip } from "svelte/animate";
 
     type UserState = {
         token: string;
-        history: { link: string; date: string }[];
-        lastText: string;
     };
+
+    type ApiEnum = Record<
+        | "risk"
+        | "frequency"
+        | "style"
+        | "keywords"
+        | "formality"
+        | "readability",
+        string
+    >;
+
+    const apiRecord: ApiEnum = {
+        risk: "Общий риск",
+        frequency: "Повторы",
+        style: "Стилистика",
+        keywords: "Запросы",
+        formality: "Водность",
+        readability: "Удобочитаемость",
+    };
+
+    let apis = $derived(
+        Object.keys(apiRecord).map((key) => {
+            const apiKey = key as keyof ApiEnum;
+            const data = apiRecord[apiKey];
+            return { apiKey, data };
+        }),
+    );
+
     let loading = $state(true);
     let api = $state("risk");
 
     let userState = $state<UserState>({
         token: "",
-        history: [],
-        lastText: "",
     });
-    let text = $state(userState?.lastText);
-    let history = $derived.by(() => {
-        const s = userState.history.map((z) => ({
-            date: new Date(z.date),
-            link: z.link,
-        }));
-        s.sort((a, b) => b.date - a.date);
-        return s;
-    });
+    let text = $state("");
+    let ap = $state("");
 
     onMount(() => {
         const localState = localStorage.getItem("user_state");
@@ -38,16 +59,7 @@
         try {
             loading = true;
             await submit();
-            if (foo.result?.link) {
-                userState.history.push({
-                    date: new Date().toLocaleString(),
-                    link: foo.result.link,
-                });
-                if (userState.history.length > 10) {
-                    userState.history.shift();
-                }
-                localStorage.setItem("user_state", JSON.stringify(userState));
-            }
+            ap = apiRecord[api as keyof ApiEnum];
         } finally {
             loading = false;
         }
@@ -60,8 +72,6 @@
     const removeToken = () => {
         userState = {
             token: "",
-            history: [],
-            lastText: "",
         };
         localStorage.setItem("user_state", JSON.stringify(userState));
     };
@@ -91,34 +101,18 @@
         <div>
             <div class="mb-4">
                 <button class="btn btn-error" onclick={removeToken}
-                    >Удалить ключ</button
-                >
+                    >Удалить ключ
+                </button>
             </div>
             <form {...foo.enhance(onSubmit)} class="grid grid-cols-1 gap-y-5">
                 <select class="select" name="api" bind:value={api}>
-                    <option value="risk" selected={isSelected("risk")}
-                        >Общий риск</option
-                    >
-                    <option value="frequency" selected={isSelected("frequency")}
-                        >Повторы</option
-                    >
-                    <option value="style" selected={isSelected("style")}
-                        >Стилистика</option
-                    >
-                    <option value="keywords" selected={isSelected("keywords")}
-                        >Запросы</option
-                    >
-                    <option value="formality" selected={isSelected("formality")}
-                        >Водность</option
-                    >
-                    <option
-                        value="readability"
-                        selected={api === "readability" ? true : false}
-                        >Удобочитаемость</option
-                    >
+                    {#each apis as { apiKey, data }}
+                        <option value={apiKey} selected={isSelected(apiKey)}
+                            >{data}
+                        </option>
+                    {/each}
                 </select>
                 <input type="hidden" name="key" value={userState.token} />
-
                 <div class="flex">
                     <textarea
                         class="textarea-info outline p-2"
@@ -135,21 +129,105 @@
         </div>
     {/if}
 
-    <div class="w-1/2 mt-4">
-        <h2 class="text-2xl mb-6">Последние 10 запросов</h2>
-        <ol>
-            {#each history as { link, date } (link + date)}
-                <li animate:flip>
-                    <a
-                        id={link}
-                        class="mb-4 link w-full block"
-                        target="_blank"
-                        href={"https://turgenev.ashmanov.com/?t=" + link}
-                        >ссылка - {date.toLocaleString()}
-                    </a>
-                </li>
-            {/each}
-        </ol>
+    <div class="w-full mt-4">
+        {#if loading}
+            <div class="skeleton h-[40rem] w-[44rem]"></div>
+        {:else}
+            <table class="table w-full">
+                <thead class="bg-base-300">
+                    <tr>
+                        <th>Категория</th>
+                        <th>Информация</th>
+                        <th>Ссылка</th>
+                    </tr>
+                </thead>
+                {#if foo.result}
+                    <tbody>
+                        {#if foo.result.details}
+                            <tr>
+                                <td>Общий риск</td>
+                                <td
+                                    ><b
+                                        >{foo.result.risk} ({foo.result
+                                            .level})</b
+                                    ></td
+                                >
+                                <td>
+                                    <a
+                                        class="mb-4 link w-full block"
+                                        target="_blank"
+                                        href={"https://turgenev.ashmanov.com/?t=" +
+                                            foo.result.link}
+                                        >Результат
+                                    </a>
+                                </td>
+                                <td>
+                                    <ul>
+                                        {#each foo.result.params as param}
+                                            <li>
+                                                {param.name} -
+                                                <b>{param.value}</b>
+                                                ({param.score})
+                                            </li>
+                                        {/each}
+                                    </ul>
+                                </td>
+                            </tr>
+                            {#each foo.result.details as detail}
+                                {@const k = detail.block as keyof ApiEnum}
+                                <tr>
+                                    <td>{apiRecord[k]}: <b>{detail.sum}</b></td>
+                                    <td>
+                                        <ul>
+                                            {#each detail.params as param}
+                                                <li>
+                                                    {param.name} -
+                                                    <b>{param.value}</b>
+                                                    ({param.score})
+                                                </li>
+                                            {/each}
+                                        </ul>
+                                    </td>
+                                    <td>
+                                        <a
+                                            class="mb-4 link w-full block"
+                                            target="_blank"
+                                            href={"https://turgenev.ashmanov.com/?t=" +
+                                                detail.link}
+                                            >Результат
+                                        </a>
+                                    </td>
+                                </tr>
+                            {/each}
+                        {:else}
+                            <tr>
+                                <td>
+                                    {ap}
+                                </td>
+                                <td>
+                                    {#each foo.result.params as param}
+                                        <li>
+                                            {param.name} -
+                                            <b>{param.value}</b>
+                                            ({param.score})
+                                        </li>
+                                    {/each}
+                                </td>
+                                <td>
+                                    <a
+                                        class="mb-4 link w-full block"
+                                        target="_blank"
+                                        href={"https://turgenev.ashmanov.com/?t=" +
+                                            foo.result.link}
+                                        >Результат
+                                    </a>
+                                </td>
+                            </tr>
+                        {/if}
+                    </tbody>
+                {/if}
+            </table>
+        {/if}
     </div>
 </div>
 

@@ -95,7 +95,7 @@
         <form onsubmit={addToken} class="flex flex-col w-1/2">
             <label for="token" class="label mb-4">Добавить ключ</label>
             <input type="text" class="input input-accent mb-4" name="token" />
-            <button class="btn btn-success">Добавить</button>
+            <button class="btn btn-secondary">Добавить</button>
         </form>
     {:else}
         <div>
@@ -104,7 +104,10 @@
                     >Удалить ключ
                 </button>
             </div>
-            <form {...foo.enhance(onSubmit)} class="grid grid-cols-1 gap-y-5">
+            <form
+                {...foo.enhance(onSubmit)}
+                class="flex flex-col w-full gap-y-5"
+            >
                 <select class="select" name="api" bind:value={api}>
                     {#each apis as { apiKey, data }}
                         <option value={apiKey} selected={isSelected(apiKey)}
@@ -113,28 +116,27 @@
                     {/each}
                 </select>
                 <input type="hidden" name="key" value={userState.token} />
-                <div class="flex">
-                    <textarea
-                        class="textarea-info outline p-2"
-                        cols="100"
-                        rows="20"
-                        name="text"
-                        placeholder="Введите текст"
-                        bind:value={text}
-                    >
-                    </textarea>
-                </div>
-                <button class="btn btn-primary" type="submit">Отправить</button>
+                <textarea
+                    class="textarea textarea-secondary p-2 w-full"
+                    rows="20"
+                    name="text"
+                    placeholder="Введите текст"
+                    bind:value={text}
+                >
+                </textarea>
+                <button class="btn btn-secondary" type="submit"
+                    >Отправить</button
+                >
             </form>
         </div>
     {/if}
 
-    <div class="w-full mt-4">
+    <div class="w-full">
         {#if loading}
             <div class="skeleton h-[40rem] w-[44rem]"></div>
         {:else}
             <table class="table w-full">
-                <thead class="bg-base-300">
+                <thead class="bg-secondary text-white text-center">
                     <tr>
                         <th>Категория</th>
                         <th>Информация</th>

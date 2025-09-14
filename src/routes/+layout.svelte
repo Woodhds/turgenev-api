@@ -9,8 +9,22 @@
     <link rel="icon" href={favicon} />
 </svelte:head>
 
-<header class="w-full bg-secondary"></header>
-<main class="mx-auto flex max-w-[90rem] py-3">
+<header class="bg-secondary w-full">
+    <nav class="navbar flex items-center h-full max-w-7xl m-auto">
+        <ul class="navbar-start gap-x-4 text-secondary-content">
+            <li>
+                <a class="btn btn-ghost" href="/">Главная</a>
+            </li>
+            <li>
+                <a class="btn btn-ghost" href="/about">О нас</a>
+            </li>
+            <li>
+                <a class="btn btn-ghost" href="/feedback">Обратная связь</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="mx-auto flex max-w-7xl py-3">
     {@render children?.()}
 </main>
 <footer class="footer w-full bg-secondary"></footer>

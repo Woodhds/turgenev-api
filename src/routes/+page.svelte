@@ -1,10 +1,5 @@
 <script lang="ts">
-    import {
-        foo,
-        type AnalysisResult,
-        type Detail,
-        type DetailResult,
-    } from "./data.remote";
+    import { foo, type AnalysisResult, type Detail } from "./data.remote";
     import { onMount } from "svelte";
 
     type UserState = {
@@ -93,9 +88,11 @@
         <div class="skeleton h-[40rem] w-[44rem]"></div>
     {:else if !userState.token}
         <form onsubmit={addToken} class="flex flex-col w-1/2">
-            <label for="token" class="label mb-4">Добавить ключ</label>
-            <input type="text" class="input input-accent mb-4" name="token" />
-            <button class="btn btn-secondary">Добавить</button>
+            <fieldset class="fieldset gap-y-4">
+                <fieldset-legend>Добавить ключ</fieldset-legend>
+                <input type="text" class="input input-secondary" name="token" />
+                <button class="btn btn-secondary">Добавить</button>
+            </fieldset>
         </form>
     {:else}
         <div>
@@ -134,9 +131,9 @@
     <div class="w-full">
         {#if loading}
             <div class="skeleton h-[40rem] w-[44rem]"></div>
-        {:else}
+        {:else if userState.token}
             <table class="table w-full">
-                <thead class="bg-secondary text-white text-center">
+                <thead class="bg-secondary text-secondary-content text-center">
                     <tr>
                         <th>Категория</th>
                         <th>Информация</th>

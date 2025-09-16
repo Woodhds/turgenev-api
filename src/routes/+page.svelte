@@ -105,7 +105,11 @@
                 {...foo.enhance(onSubmit)}
                 class="flex flex-col w-full gap-y-5"
             >
-                <select class="select" name="api" bind:value={api}>
+                <select
+                    class="select select-secondary"
+                    name="api"
+                    bind:value={api}
+                >
                     {#each apis as { apiKey, data }}
                         <option value={apiKey} selected={isSelected(apiKey)}
                             >{data}
@@ -231,5 +235,5 @@
 </div>
 
 <svelte:head>
-    <title>Turgenev - API</title>
+    <title>Текстометр</title>
 </svelte:head>
